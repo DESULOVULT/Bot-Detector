@@ -73,7 +73,7 @@ La línea que separa ambos casos es la diferencia entre **leer** y **navegar**:
 
 Dicho de otro modo: sí usamos técnicas de lectura automatizada —en cierto sentido, "bots" leyendo datos—, pero las usamos exclusivamente en modo pasivo y con el único propósito de exponer comportamiento inauténtico, nunca para replicarlo. Son las gemas del propio ecosistema (datos públicos, atributos de accesibilidad, estructura del DOM) las que se usan para desarmar a quienes abusan de ese mismo ecosistema.
 
-### Datos que no es posible ni ético obtener
+### Datos que no es posible obtener aún almenos de forma convencional 
 
 No toda la información es un dato válido para "usar contra los bots" — hay un límite claro entre leer lo que ya es público y voluntario, y acceder a algo que ninguna plataforma expone por diseño. Durante el diseño de la interfaz surgieron ideas de métricas más "profundas" que, al revisarlas con detenimiento, resultaron inviables por razones técnicas o de privacidad:
 
