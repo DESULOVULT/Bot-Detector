@@ -57,3 +57,5 @@ A menudo surge la duda sobre el método que emplean apps de descarga de video de
 - La extensión elude este problema al **no realizar llamadas independientes** a los servidores de Facebook, consumiendo únicamente el DOM local generado por la sesión legítima del usuario.
 
 Esto no descarta una posible evolución futura: si el proyecto creciera hacia, por ejemplo, un panel con estadísticas históricas de cuentas reportadas por la comunidad, ahí sí tendría sentido sumar una aplicación web con su propio backend — pero esa pieza existiría *además* de la extensión, no en su lugar. La extensión seguiría siendo la encargada de "ver" Facebook.
+
+## Filosofía de privacidad y ética Esta sección se movió a un documento propio: [docs/PRIVACY_PHILOSOPHY.md](./PRIVACY_PHILOSOPHY.md)
