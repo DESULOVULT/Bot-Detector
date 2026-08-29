@@ -1,1 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Bot Detector",
+  "version": "0.1.0",
+  "description": "Herramienta local para identificar probabilidad de interacciones automatizadas en redes sociales.",
+  "permissions": [
+    "activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.facebook.com/*",
+        "https://web.facebook.com/*"
+      ],
+      "css": ["styles.css"],
+      "js": ["content.js"]
+    }
+  ]
+}
 
