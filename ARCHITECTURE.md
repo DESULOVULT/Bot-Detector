@@ -25,3 +25,17 @@ Además, en lugar de depender de los nombres de clase CSS de Facebook (que son g
 ## El reto de probar una extensión
 
 Un descubrimiento importante durante el desarrollo: las extensiones de navegador no se pueden "previsualizar" como una página web normal. Para probarlas hace falta cargarlas en modo desarrollador directamente en un navegador compatible (Chrome de escritorio, o alternativas como Microsoft Edge Canary en Android). Los navegadores móviles convencionales, como Chrome para Android, no permiten esto — una limitación importante a tener en cuenta si el desarrollo se hace principalmente desde un celular.
+
+## ¿Por qué una extensión y no una app o un programa de escritorio?
+
+Antes de decidirse por el formato de extensión de navegador, se evaluaron las alternativas más obvias:
+
+- **App independiente (Android/iOS):** Para que una app pudiera "ver" contenido de Facebook, tendría que depender de la API oficial (que restringe fuertemente el acceso a datos de perfiles ajenos) o recurrir a scraping por cuenta propia — el mismo riesgo de bloqueos que ya se había descartado. Además, habría que simular un navegador completo dentro de la app y gestionar sesiones de login manualmente, reconstruyendo desde cero algo que un navegador real ya resuelve de fábrica.
+
+- **Programa de escritorio (Windows/Mac):** El problema de fondo es el mismo: sin un navegador real de por medio, no hay forma legítima de "ver" lo que el usuario ve en Facebook. Sería posible controlar un navegador por detrás con herramientas de automatización (como Selenium o Playwright), pero eso equivale a automatizar un navegador desde afuera — un patrón que las plataformas detectan y bloquean con más facilidad que una extensión real.
+
+- **Extensión de navegador (la opción elegida):** Esta es la única alternativa que aprovecha que **el usuario ya inició sesión y ya está viendo Facebook de forma completamente normal**. La extensión no pide nada, no simula nada, no automatiza un navegador desde afuera: simplemente lee lo que ya está renderizado en pantalla, del mismo modo en que lo haría un lector de pantalla para personas con discapacidad visual (de ahí que la detección se apoye en atributos de accesibilidad como `role="article"`, ver sección siguiente).
+
+En definitiva, la extensión no se eligió solo por ser la opción más simple de programar, sino por ser la única que respeta cómo estas plataformas están diseñadas para ser usadas — por un humano, en un navegador, con sesión iniciada — en lugar de pelear contra esas reglas.
+
+Esto no descarta una posible evolución futura: si el proyecto creciera hacia, por ejemplo, un panel con estadísticas históricas de cuentas reportadas por la comunidad, ahí sí tendría sentido sumar una aplicación web con su propio backend — pero esa pieza existiría *además* de la extensión, no en su lugar. La extensión seguiría siendo la encargada de "ver" Facebook.
