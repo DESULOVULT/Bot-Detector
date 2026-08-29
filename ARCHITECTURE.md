@@ -39,3 +39,26 @@ Antes de decidirse por el formato de extensión de navegador, se evaluaron las a
 En definitiva, la extensión no se eligió solo por ser la opción más simple de programar, sino por ser la única que respeta cómo estas plataformas están diseñadas para ser usadas — por un humano, en un navegador, con sesión iniciada — en lugar de pelear contra esas reglas.
 
 Esto no descarta una posible evolución futura: si el proyecto creciera hacia, por ejemplo, un panel con estadísticas históricas de cuentas reportadas por la comunidad, ahí sí tendría sentido sumar una aplicación web con su propio backend — pero esa pieza existiría *además* de la extensión, no en su lugar. La extensión seguiría siendo la encargada de "ver" Facebook.
+
+## El límite entre "pasivo" y "activo": qué datos puede y no puede ver la extensión
+
+Al diseñar la interfaz de análisis por perfil, surgió una pregunta que puso a prueba el propio principio de diseño pasivo: ¿debería la extensión navegar automáticamente a cada perfil que aparece en el feed (el muro principal donde Facebook muestra publicaciones de forma continua) para analizarlo a fondo?
+
+La respuesta es no, y por una razón que va más allá de preferencia: **hacerlo convertiría a la extensión en el mismo tipo de comportamiento que busca detectar.** Un script (una secuencia de instrucciones que el navegador ejecuta automáticamente) que abre perfiles de forma automática y secuencial es, funcionalmente, un bot navegando la plataforma sin intervención humana directa — exactamente el patrón que los sistemas antibot (los mecanismos de seguridad que las plataformas usan para detectar y bloquear comportamiento automatizado, no humano) de Facebook están diseñados para identificar y bloquear. Diseñar una herramienta anti-bots que termina comportándose como un bot sería una contradicción de fondo, no solo un riesgo técnico.
+
+Esto llevó a definir dos niveles de análisis, alineados con el principio de pasividad:
+
+- **Nivel 1 — Badge inline (siempre activo):** un "badge" es la pequeña etiqueta visual (como un sello o insignia) que aparece junto al nombre de una persona mostrando el porcentaje de sospecha. "Inline" significa que aparece integrado directamente en el mismo lugar donde ya está el contenido (junto al nombre, sin abrir nada nuevo). Se calcula usando únicamente datos ya visibles en pantalla en el contexto donde aparece un nombre o foto de perfil (feed, comentarios, listas de reacciones). No requiere visitar ningún perfil. Las señales disponibles aquí son limitadas (por ejemplo, si el enlace al perfil usa un ID numérico —una serie de números genérica, en vez de un nombre de usuario elegido por la persona, como facebook.com/123456789 en vez de facebook.com/juanperez—), pero no implican ninguna navegación adicional iniciada por la extensión.
+
+- **Nivel 2 — Panel detallado (bajo demanda):** "bajo demanda" significa que solo ocurre cuando alguien lo pide explícitamente, no de forma automática. Se activa únicamente cuando el propio usuario decide, por su propia voluntad, entrar a un perfil — igual que lo haría sin la extensión instalada. En ese momento, la extensión simplemente lee los datos que esa página ya expone de forma natural (ubicación, universidad, número de amigos y publicaciones, tipo de foto de perfil, etc.), sin necesidad de ninguna petición (solicitud de datos a un servidor) o navegación extra.
+
+### Datos que no es posible ni ético obtener
+
+Durante el diseño de la interfaz surgieron ideas de métricas más "profundas" que, al revisarlas con detenimiento, resultaron inviables por razones técnicas o de privacidad:
+
+- **Historial de nombres anteriores:** Facebook no expone públicamente esta información salvo que el propio usuario active voluntariamente la función "También conocido como" en su cuenta. No hay forma de ver nombres que la persona ya eliminó.
+- **Reputación de IP:** la dirección IP (una especie de "número de matrícula" único que identifica a cada dispositivo conectado a internet) de un tercero nunca es visible para otro usuario, por diseño fundamental de cómo funciona la web — no es una limitación de Facebook, sino de internet en general.
+- **Actividad de mensajería:** solo el propio usuario puede ver el contenido de sus conversaciones. No existe forma de que la extensión conozca la actividad de mensajes de otra persona sin violar su privacidad.
+- **Ratio de seguidos/seguidores:** una proporción (por ejemplo, "sigue a 500 pero solo lo siguen 10") común en redes como Instagram o Twitter/X para detectar cuentas sospechosas. A diferencia de esas plataformas, Facebook no expone este dato de forma estándar en la mayoría de perfiles personales.
+
+Esta distinción importa porque protege dos cosas al mismo tiempo: la integridad técnica del proyecto (no prometer datos que no se pueden entregar de forma confiable) y su integridad ética (no normalizar la idea de que una herramienta "de detección" tiene licencia para invadir privacidad ajena en nombre de un buen propósito).
