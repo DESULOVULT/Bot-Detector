@@ -79,3 +79,59 @@ No toda la información es un dato válido para "usar contra los bots" — hay u
 - **Ratio de seguidos/seguidores:** una proporción (por ejemplo, "sigue a 500 pero solo lo siguen 10") común en redes como Instagram o Twitter/X para detectar cuentas sospechosas. A diferencia de esas plataformas, Facebook no expone este dato de forma estándar en la mayoría de perfiles personales.
 
 Esta distinción importa porque protege dos cosas al mismo tiempo: la integridad técnica del proyecto (no prometer datos que no se pueden entregar de forma confiable) y su integridad ética (no normalizar la idea de que una herramienta "de detección" tiene licencia para invadir privacidad ajena en nombre de un buen propósito, incluso cuando ese propósito es legitimo).
+
+## El problema de la cobertura: por qué no basta con "leer lo que ya se ve"
+
+Durante el diseño surgió una pregunta central: ¿cómo lograr que la extensión analice una cantidad grande de perfiles —no solo el que el usuario tiene enfrente en un momento dado— sin que eso implique convertir la extensión en el mismo tipo de comportamiento automatizado que busca detectar?
+
+Se evaluaron dos caminos que, en un principio, parecían atajos razonables:
+
+1. **Automatizar la obtención de datos de cada perfil** de forma que el sistema antibot de Facebook no lo distinga de una decisión real del usuario (por ejemplo, simulando pausas, scroll o navegación "humana" entre perfiles).
+2. **Replicar métodos usados por apps de terceros** (como las que descargan videos de Facebook) que acceden a contenido de la plataforma sin pasar por su API oficial, asumiendo que si esas apps "se salen con la suya", la misma técnica serviría para automatizar el análisis de perfiles.
+
+Ambos caminos se descartaron conscientemente, y se documentan acá — en vez de omitirlos — para que cualquiera que retome el proyecto entienda por qué no están implementados:
+
+- Una app que extrae la URL directa de un video generalmente solo **lee** un dato que Facebook ya sirvió al navegador cuando el usuario reprodujo ese video — no automatiza navegación ni decide por su cuenta a qué contenido acceder. No es un método de evasión aplicable a "visitar muchos perfiles sin que el usuario lo pida".
+- Cualquier técnica orientada específicamente a que un sistema antibot **no distinga automatización de uso humano** (delays aleatorios, simulación de patrones de mouse/scroll, rotación de sesiones) cambia la naturaleza del proyecto: en el momento en que el script decide a dónde ir y cuándo, sin que un humano lo haya pedido puntualmente, la extensión pasa a ser funcionalmente un bot operando la plataforma — exactamente el patrón que este proyecto existe para detectar. Esto se descarta de forma categórica, no por ser difícil de implementar, sino porque invalida la base ética del proyecto: una herramienta anti-bot que aprende a comportarse como un bot para evadir detección deja de tener una base moral distinta a la de aquello que combate.
+
+### El problema de fondo: cobertura vs. automatización
+
+El límite real que queda después de descartar esos dos caminos es que **la extensión solo puede analizar lo que el usuario ya decidió mirar**. La cobertura depende enteramente del comportamiento de navegación de cada persona — alguien que scrollea poco va a tener pocos datos, sin importar cuánto tiempo lleve la extensión instalada. Esto no es un bug a resolver con más ingeniería; es la consecuencia directa de la decisión de diseño de "La filosofía central" (leer, no navegar), y debe tratarse como un trade-off permanente del proyecto, no como algo pendiente de "solucionar" en una v2.
+
+## Análisis en lote: contenedores ya renderizados por acción humana
+
+La solución real al problema de cobertura no es automatizar el recorrido, sino aprovechar que Facebook ya carga, de una sola vez, **muchas cuentas dentro de un mismo contenedor** cuando el usuario abre algo puntual — por ejemplo, el modal de "Todas las reacciones" de un post, o la lista de comentaristas. Ese modal es una extensión del mismo principio del Nivel 1 (badge inline): el usuario decidió abrir esa ventana con un clic; la extensión simplemente lee lo que ya quedó renderizado adentro — incluyendo el scroll interno del propio modal, que Facebook resuelve con sus propias llamadas, no con automatización nuestra.
+
+Esto define un tercer modo de análisis:
+
+- **Nivel 1.5 — Análisis en lote (bajo demanda de apertura, no de perfil por perfil):** se activa cuando el usuario abre un contenedor con múltiples cuentas (reacciones, lista de comentaristas, lista de "me gusta" de una página). La extensión corre la heurística sobre todas las entradas visibles del contenedor a la vez, sin navegar a ningún perfil individual. La diferencia con el Nivel 1 normal es solo la cantidad de cuentas visibles al mismo tiempo, no el mecanismo.
+
+### Límites de confianza según el dato disponible
+
+| Nivel | Datos disponibles | Confiabilidad | Cómo se debe comunicar |
+|---|---|---|---|
+| 1 — Badge inline | Nombre, foto pequeña, contexto del post/comentario | Baja-media | Rango cualitativo ("sospecha baja/media/alta"), no un % |
+| 1.5 — Lote en modal | Nombre + foto miniatura de muchas cuentas a la vez, comparables entre sí | Media (mejora con comparación cruzada dentro del mismo lote) | Rango cualitativo + señal de "patrón repetido detectado en N cuentas del lote" |
+| 2 — Panel detallado | Ubicación, universidad, amigos, posts, privacidad configurada, antigüedad visible | Alta | Porcentaje numérico, ya que hay suficientes variables independientes para justificarlo |
+
+La heurística del Nivel 1.5 se beneficia de **comparación cruzada dentro del mismo lote**: si varias cuentas del mismo modal comparten patrones de nombre (estructura "Nombre + Apellido" generada), estilo de foto (mismo tipo de imagen stock, mismo fondo, ausencia de foto), o fueron creadas en ventanas de tiempo cercanas (cuando ese dato es visible), eso es una señal mucho más fuerte que evaluar una cuenta de forma aislada — y no requiere ningún dato adicional al que Facebook ya expuso por la acción del usuario.
+
+### Por qué no usar porcentajes pseudo-precisos con datos limitados
+
+Mostrar "98% Probabilidad" con solo nombre y foto en miniatura es una promesa de exactitud que la heurística no puede respaldar, y puede llevar a acusar injustamente a cuentas reales. La extensión debe:
+
+- Usar rangos cualitativos ("sospecha alta", "sospecha media") en los niveles 1 y 1.5, reservando el porcentaje numérico para el Nivel 2.
+- Etiquetar explícitamente cuando una alerta viene de "patrón repetido en lote" en vez de análisis individual.
+- Nunca presentar una heurística de lote como confirmación — sigue siendo una probabilidad dentro de un conjunto de señales, igual que la restricción de privacidad mencionada en la sección anterior.
+
+## Camino elegido para ampliar cobertura sin automatizar: modo asistido
+
+Para reducir la fricción de que el usuario tenga que descubrir manualmente qué publicaciones vale la pena abrir, sin cruzar la línea leer/navegar:
+
+- Mientras el usuario scrollea el feed con normalidad, la extensión detecta (vía el `MutationObserver` ya descrito) publicaciones con señales previas de interés — por ejemplo, cantidad alta de reacciones o comentarios con lenguaje repetitivo detectado a simple vista.
+- Se muestra un indicador visual no intrusivo (ej. un pequeño ícono junto al contador de reacciones) invitando a abrir el modal correspondiente.
+- El usuario decide, con un clic, si lo abre o no — la extensión nunca lo abre por su cuenta.
+- Cada apertura real (decidida por el humano) alimenta el análisis en lote del Nivel 1.5 y, opcionalmente, una base local de resultados acumulados.
+
+Este modo reduce la fricción de descubrir qué revisar, sin tocar la frontera entre leer y navegar. Sigue dependiendo de que el usuario haga clic — pero hace ese clic más informado y más frecuente, que es la única palanca de cobertura disponible dentro de los límites definidos en este documento.
+
