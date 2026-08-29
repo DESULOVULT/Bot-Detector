@@ -50,8 +50,3 @@ No necesitas ser un experto en programación para colaborar:
 
 ## 🚀 Estado del Proyecto
 *Fase inicial de ideación, arquitectura y maquetación de la extensión.*
-- **Creadores / Usuarios:** Reportando patrones comunes de bots, proponiendo ideas de UI/UX o probando las versiones alfa.
-- **Analistas:** Aportando datasets o listados de patrones sospechosos.
-
-## 🚀 Estado del Proyecto
-*El proyecto esta en fase inicial de ideacion y estructura.*
